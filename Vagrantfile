@@ -7,7 +7,7 @@ Vagrant.configure("2") do |config|
   config.vm.box = "ubuntu/jammy64"
 
   # --- VM 1: THE BRAIN (Elasticsearch & Kibana) ---
-  config.vm.define "elk_node" do |elk| # Name identifier of machine
+  config.vm.define "elk" do |elk|
 
     elk.vm.hostname = "elk-node"
 
@@ -31,20 +31,12 @@ Vagrant.configure("2") do |config|
 
       ansible.install = true # This tells Vagrant to install Ansible via apt for you
 
-      ansible.limit = "all"
-
-      ansible.groups = {
-        "elk"      => ["elk_node"],
-        "logstash" => ["logstash_node"],
-        "targets"  => ["web_target"]
-      }
-
     end
 
   end
 
   # --- VM 2: THE FILTER (Logstash) ---
-  config.vm.define "logstash_node" do |ls|
+  config.vm.define "logstash" do |ls|
 
     ls.vm.hostname = "logstash-node"
 
@@ -80,5 +72,18 @@ Vagrant.configure("2") do |config|
     end
 
   end
+
+
+  # Calling the ansible playbook, grayed out for now cause of errors
+
+  #  ansible.limit = "all"
+
+  #  ansible.groups = {
+  #    "elk"      => ["elk_node"],
+  #    "logstash" => ["logstash_node"],
+  #    "targets"  => ["web_target"]
+  #  }
+
+  # end
 
 end
