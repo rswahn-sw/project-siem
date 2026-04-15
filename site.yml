@@ -1,0 +1,33 @@
+---
+# First, apply common settings to all nodes (Security, Updates)
+- name: Apply common configuration to all nodes
+  hosts: all
+  become: yes
+  tasks:
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+
+# Setup the ELK stack
+- name: Setup Elasticsearch and Kibana
+  hosts: elk
+  become: yes
+  roles:
+    - elasticsearch
+    - kibana
+
+# Setup Logstash
+- name: Setup Logstash Pipeline
+  hosts: logstash
+  become: yes
+  roles:
+    - logstash
+
+# Setup the monitored webserver
+- name: Setup Webserver and Log Shippers
+  hosts: targets
+  become: yes
+  roles:
+    - nginx
+    - filebeat
