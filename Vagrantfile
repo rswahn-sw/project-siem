@@ -77,12 +77,11 @@ Vagrant.configure("2") do |config|
       ansible.limit = "all"
 
       ansible.groups = {
-        "elk"      => ["elk"],
-        "logstash" => ["logstash"],
-        "webserver"  => ["webserver"]
+        "elk_group"      => ["elk"],
+        "logstash_group" => ["logstash"],
+        "webserver_group"  => ["webserver"]
       }
-
-    end      
+    end
 
   end
 
