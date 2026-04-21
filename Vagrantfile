@@ -24,6 +24,16 @@ Vagrant.configure("2") do |config|
 
     end
 
+    # NY KOD - hämtar elk's nyckel från delad mapp
+    ls.vm.provision "shell", inline: <<-SHELL
+      while [ ! -f /vagrant/elk_key.pub ]; do
+        echo "Väntar på elk nyckel..."
+        sleep 2
+      done
+      cat /vagrant/elk_key.pub >> /home/vagrant/.ssh/authorized_keys
+      chmod 600 /home/vagrant/.ssh/authorized_keys
+    SHELL
+
   end
 
   # --- WEBSERVER VM ---
@@ -43,6 +53,16 @@ Vagrant.configure("2") do |config|
       vb.cpus = 1
 
     end
+
+  # NY KOD - hämtar elk's nyckel från delad mapp
+  web.vm.provision "shell", inline: <<-SHELL
+   while [ ! -f /vagrant/elk_key.pub ]; do
+     echo "Väntar på elk nyckel..."
+     sleep 2
+  done
+  cat /vagrant/elk_key.pub >> /home/vagrant/.ssh/authorized_keys
+  chmod 600 /home/vagrant/.ssh/authorized_keys
+SHELL
 
   end
 
@@ -65,6 +85,13 @@ Vagrant.configure("2") do |config|
       vb.cpus = 1 # Changed to 1 from 2, for now
 
     end
+    # NY KOD - skapar SSH-nyckel och lägger den i delad mapp
+    elk.vm.provision "shell", inline: <<-SHELL
+      if [ ! -f /home/vagrant/.ssh/id_rsa ]; then
+        ssh-keygen -t rsa -N "" -f /home/vagrant/.ssh/id_rsa
+      fi
+      cp /home/vagrant/.ssh/id_rsa.pub /vagrant/elk_key.pub
+    SHELL
 
     # Installing Ansible on elk node, making it the control VM which all ansible commands will run from
     # Vagrant will automatically install Ansible on this VM before running the playbook
