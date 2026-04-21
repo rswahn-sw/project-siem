@@ -24,17 +24,37 @@ Vagrant.configure("2") do |config|
 
     end
 
-    # NY KOD - hämtar elk's nyckel från delad mapp
+    ls.vm.provision "shell", inline: "apt-get update && apt-get install -y ansible"
+
+
+    # Installing Ansible on ls node, making it the control VM which all ansible commands will run from
+    # Vagrant will automatically install Ansible on this VM before running the playbook
+    #ls.vm.provision "ansible_local" do |ansible|
+
+      #ansible.playbook = "site.yml"
+
+      #ansible.install = true # This tells Vagrant to install Ansible via apt for you
+
+      #ansible.limit = "all"
+
+      #ansible.groups = {
+        #"elk_group"      => ["elk"],
+        #"logstash_group" => ["logstash"],
+        #"webserver_group"  => ["webserver"]
+      #}
+
+    # NY KOD - skapar SSH-nyckel och lägger den i delad mapp
     ls.vm.provision "shell", inline: <<-SHELL
-      while [ ! -f /vagrant/elk_key.pub ]; do
-        echo "Väntar på elk nyckel..."
-        sleep 2
-      done
-      cat /vagrant/elk_key.pub >> /home/vagrant/.ssh/authorized_keys
-      chmod 600 /home/vagrant/.ssh/authorized_keys
-    SHELL
+      if [ ! -f /home/vagrant/.ssh/id_rsa ]; then
+        ssh-keygen -t rsa -N "" -f /home/vagrant/.ssh/id_rsa
+      fi
+        cp /home/vagrant/.ssh/id_rsa.pub /vagrant/ls_key.pub   # no pipe?
+        chmod 600 /home/vagrant/.ssh/id_rsa
+      SHELL
 
   end
+
+
 
   # --- WEBSERVER VM ---
   # This VM is the target to be monitored
@@ -54,18 +74,19 @@ Vagrant.configure("2") do |config|
 
     end
 
-  # NY KOD - hämtar elk's nyckel från delad mapp
-  web.vm.provision "shell", inline: <<-SHELL
-   while [ ! -f /vagrant/elk_key.pub ]; do
-     echo "Väntar på elk nyckel..."
-     sleep 2
-  done
-  cat /vagrant/elk_key.pub >> /home/vagrant/.ssh/authorized_keys
-  chmod 600 /home/vagrant/.ssh/authorized_keys
-SHELL
+    # NY KOD - hämtar ls's nyckel från delad mapp
+    web.vm.provision "shell", inline: <<-SHELL
+      while [ ! -f /vagrant/ls_key.pub ]; do
+        echo "Väntar på ls nyckel..."
+        sleep 2
+      done
+        cat /vagrant/ls_key.pub >> /home/vagrant/.ssh/authorized_keys
+        chmod 600 /home/vagrant/.ssh/authorized_keys
+      SHELL
+
+  
 
   end
-
 
   # --- "ELK" VM (Elasticsearch & Kibana) ---
   # This is the ansible controller, and the one running the SIEM tools
@@ -85,31 +106,24 @@ SHELL
       vb.cpus = 1 # Changed to 1 from 2, for now
 
     end
-    # NY KOD - skapar SSH-nyckel och lägger den i delad mapp
+
+    # NY KOD - hämtar elk's nyckel från delad mapp
     elk.vm.provision "shell", inline: <<-SHELL
-      if [ ! -f /home/vagrant/.ssh/id_rsa ]; then
-        ssh-keygen -t rsa -N "" -f /home/vagrant/.ssh/id_rsa
-      fi
-      cp /home/vagrant/.ssh/id_rsa.pub /vagrant/elk_key.pub
-    SHELL
+      while [ ! -f /vagrant/ls_key.pub ]; do
+        echo "Väntar på ls nyckel..."
+        sleep 2
+      done
+        cat /vagrant/ls_key.pub >> /home/vagrant/.ssh/authorized_keys
+        chmod 600 /home/vagrant/.ssh/authorized_keys
+      SHELL
 
-    # Installing Ansible on elk node, making it the control VM which all ansible commands will run from
-    # Vagrant will automatically install Ansible on this VM before running the playbook
-    elk.vm.provision "ansible_local" do |ansible|
+  end
 
+  config.vm.define "trigger", autostart: false do |t|
+    t.vm.provision "ansible_local" do |ansible|
       ansible.playbook = "site.yml"
-
-      ansible.install = true # This tells Vagrant to install Ansible via apt for you
-
-      ansible.limit = "all"
-
-      ansible.groups = {
-        "elk_group"      => ["elk"],
-        "logstash_group" => ["logstash"],
-        "webserver_group"  => ["webserver"]
-      }
+      # ... all your ansible settings ...
     end
-
   end
 
 end
