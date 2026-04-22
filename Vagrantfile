@@ -18,7 +18,7 @@ Vagrant.configure("2") do |config|
 
       vb.name = "project-logstash"
 
-      vb.memory = "1024"
+      vb.memory = "512"
 
       vb.cpus = 1
 
@@ -50,9 +50,23 @@ Vagrant.configure("2") do |config|
       fi
         cp /home/vagrant/.ssh/id_rsa.pub /vagrant/ls_key.pub   # no pipe?
         chmod 600 /home/vagrant/.ssh/id_rsa
+        chown vagrant:vagrant /home/vagrant/.ssh/id_rsa /home/vagrant/.ssh/id_rsa.pub
       SHELL
+    
+    # Kör Ansible från logstash
+    ls.vm.provision "ansible_local" do |ansible|
+      ansible.playbook = "site.yml"
+      ansible.install = true
+      ansible.limit = "all"
+      ansible.groups = {
+        "elk_group"       => ["elk"],
+        "logstash_group"  => ["logstash"],
+        "webserver_group" => ["webserver"]
+      }
+    end
 
   end
+  
 
 
 
@@ -68,7 +82,7 @@ Vagrant.configure("2") do |config|
 
       vb.name = "project-webserver"
 
-      vb.memory = "1024"
+      vb.memory = "512"
 
       vb.cpus = 1
 
@@ -82,6 +96,7 @@ Vagrant.configure("2") do |config|
       done
         cat /vagrant/ls_key.pub >> /home/vagrant/.ssh/authorized_keys
         chmod 600 /home/vagrant/.ssh/authorized_keys
+        chown vagrant:vagrant /home/vagrant/.ssh/authorized_keys
       SHELL
 
   
@@ -101,7 +116,7 @@ Vagrant.configure("2") do |config|
 
       vb.name = "project-elk"
 
-      vb.memory = "4096" # ELK needs significant RAM - changed to 1 from 4 GB until programs are set up
+      vb.memory = "1024" # ELK needs significant RAM - changed to 1 from 4 GB until programs are set up
 
       vb.cpus = 1 # Changed to 1 from 2, for now
 
@@ -115,15 +130,9 @@ Vagrant.configure("2") do |config|
       done
         cat /vagrant/ls_key.pub >> /home/vagrant/.ssh/authorized_keys
         chmod 600 /home/vagrant/.ssh/authorized_keys
+        chown vagrant:vagrant /home/vagrant/.ssh/authorized_keys
       SHELL
 
-  end
-
-  config.vm.define "trigger", autostart: false do |t|
-    t.vm.provision "ansible_local" do |ansible|
-      ansible.playbook = "site.yml"
-      # ... all your ansible settings ...
-    end
   end
 
 end
