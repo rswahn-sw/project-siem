@@ -44,26 +44,14 @@ Vagrant.configure("2") do |config|
       #}
 
     # NY KOD - skapar SSH-nyckel och lägger den i delad mapp
-    ls.vm.provision "shell", inline: <<-SHELL
-      if [ ! -f /home/vagrant/.ssh/id_rsa ]; then
-        ssh-keygen -t rsa -N "" -f /home/vagrant/.ssh/id_rsa
+    ls.vm.provision "shell", privileged: false, inline: <<-SHELL
+      if [ ! -f ~/.ssh/id_ed25519 ]; then
+        #ssh-keygen -t rsa -N "" -f ~/.ssh/id_rsa
+        sudo -u vagrant ssh-keygen -t ed25519 \ -f /home/vagrant/.ssh/id_ed25519 \ -N "" -C "logstash-node"
       fi
-        cp /home/vagrant/.ssh/id_rsa.pub /vagrant/ls_key.pub   # no pipe?
-        chmod 600 /home/vagrant/.ssh/id_rsa
-        chown vagrant:vagrant /home/vagrant/.ssh/id_rsa /home/vagrant/.ssh/id_rsa.pub
-      SHELL
-    
-    # Kör Ansible från logstash
-    ls.vm.provision "ansible_local" do |ansible|
-      ansible.playbook = "site.yml"
-      ansible.install = true
-      ansible.limit = "all"
-      ansible.groups = {
-        "elk_group"       => ["elk"],
-        "logstash_group"  => ["logstash"],
-        "webserver_group" => ["webserver"]
-      }
-    end
+      cp /home/vagrant/.ssh/id_ed25519.pub \ /vagrant/ansible_id_ed25519.pub
+      chmod 600 ~/.ssh/id_ed25519
+    SHELL
 
   end
   
@@ -90,14 +78,23 @@ Vagrant.configure("2") do |config|
 
     # NY KOD - hämtar ls's nyckel från delad mapp
     web.vm.provision "shell", inline: <<-SHELL
-      while [ ! -f /vagrant/ls_key.pub ]; do
-        echo "Väntar på ls nyckel..."
-        sleep 2
-      done
-        cat /vagrant/ls_key.pub >> /home/vagrant/.ssh/authorized_keys
-        chmod 600 /home/vagrant/.ssh/authorized_keys
-        chown vagrant:vagrant /home/vagrant/.ssh/authorized_keys
-      SHELL
+    # Create directory if it doesn't exist
+
+
+    # Lägg till kontrollnodens publika nyckel i
+
+    # authorized_keys. Ansible kan nu SSH:a in.
+
+    mkdir -p /home/vagrant/.ssh
+
+    cat /vagrant/ansible_id_ed25519.pub \ >> /home/vagrant/.ssh/authorized_keys
+
+    chmod 700 /home/vagrant/.ssh
+
+    chmod 600 /home/vagrant/.ssh/authorized_keys
+
+    chown -R vagrant:vagrant /home/vagrant/.ssh
+  SHELL
 
   
 
@@ -124,14 +121,23 @@ Vagrant.configure("2") do |config|
 
     # NY KOD - hämtar elk's nyckel från delad mapp
     elk.vm.provision "shell", inline: <<-SHELL
-      while [ ! -f /vagrant/ls_key.pub ]; do
-        echo "Väntar på ls nyckel..."
-        sleep 2
-      done
-        cat /vagrant/ls_key.pub >> /home/vagrant/.ssh/authorized_keys
-        chmod 600 /home/vagrant/.ssh/authorized_keys
-        chown vagrant:vagrant /home/vagrant/.ssh/authorized_keys
-      SHELL
+    # Create directory if it doesn't exist
+
+
+    # Lägg till kontrollnodens publika nyckel i
+
+    # authorized_keys. Ansible kan nu SSH:a in.
+
+    mkdir -p /home/vagrant/.ssh
+
+    cat /vagrant/ansible_id_ed25519.pub \ >> /home/vagrant/.ssh/authorized_keys
+
+    chmod 700 /home/vagrant/.ssh
+
+    chmod 600 /home/vagrant/.ssh/authorized_keys
+
+    chown -R vagrant:vagrant /home/vagrant/.ssh
+  SHELL
 
   end
 
