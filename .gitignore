@@ -35,3 +35,9 @@ override.tf.json
 # Ignore CLI configuration files
 .terraformrc
 terraform.rc
+
+# SSH public key, old file that shouldn't be created anymore
+ls_key.pub
+
+# SSH public key
+ansible_id_ed25519.pub

@@ -4,6 +4,18 @@
   hosts: all
   become: yes
   tasks:
+    # Running apt update on all machines, saying yes to prompts
+    #- name: Update apt package lists
+    #  shell: apt update -y
+    #  args:
+    #    warn: false  # Suppress warnings about apt lists being outdated
+        
+    # Running apt upgrade on all machines, saying yes to prompts
+    #- name: Upgrade all apt packages
+    #  shell: apt upgrade -y
+    #  register: upgrade_result  # Optional: Store output for later checks
+
+
     - name: Update apt cache
       apt:
         update_cache: yes
@@ -26,7 +38,7 @@
 
 # Setup the monitored webserver
 - name: Setup Webserver and Log Shippers
-  hosts: targets
+  hosts: webserver
   become: yes
   roles:
     - nginx
