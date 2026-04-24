@@ -55,6 +55,18 @@ NOTE
 Logstash installpath is /etc/logstash. Here is logstash.yml which is the primary configuration file. 
 A new .conf file needs to be created for the pipeline to Filebeat. This goes in the /etc/logstash/conf.d directory. 
 
+########
+NGINX
+########
+
+1. Update the package list and install Nginx
+sudo apt update && sudo apt install nginx -y
+
+2. Enable Nginx to start automatically on reboot
+sudo systemctl enable nginx
+
+3. Start Nginx
+sudo systemctl start nginx
 
 
 --------------------
