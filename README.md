@@ -68,6 +68,27 @@ sudo systemctl enable nginx
 3. Start Nginx
 sudo systemctl start nginx
 
+########
+FILEBEAT
+########
+
+1. Download and install Public Signing Key
+wget -qO - https://artifacts.elastic.co/GPG-KEY-elasticsearch | sudo gpg --dearmor -o /usr/share/keyrings/elastic-keyring.gpg
+
+2. Install apt-transport-https package
+sudo apt-get install-apt-transport-https -y
+
+3. Save the repository definition to /etc/apt/sources.list.d/elastic-9.x.list
+echo "deb [signed-by=/usr/share/keyrings/elastic-keyring.gpg] https://artifacts.elastic.co/packages/9.x/apt stable main" | sudo tee /etc/apt/sources.list.d/elastic-9.x.list
+
+4. Update package list and install Filebeat
+sudo apt-get update && sudo apt-get install filebeat -y
+
+5. Enable Filebeat to start automatically on reboot
+sudo systemctl enable filebeat
+
+6. Start Filebeat
+sudo systemctl start filebeat
 
 --------------------
 Summary of Data Flow
