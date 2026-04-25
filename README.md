@@ -47,13 +47,63 @@ sudo apt-get install apt-transport-https
 3. Save the repository definition to /etc/apt/sources.list.d/elastic-9.x.list
 echo "deb [signed-by=/usr/share/keyrings/elastic-keyring.gpg] https://artifacts.elastic.co/packages/9.x/apt stable main" | sudo tee -a /etc/apt/sources.list.d/elastic-9.x.list
 
-4. Install Logstash
-sudo apt-get install logstash
-
+4. Update package list and install Logstash
+sudo apt-get update && sudo apt-get install logstash
 
 NOTE
 Logstash installpath is /etc/logstash. Here is logstash.yml which is the primary configuration file. 
 A new .conf file needs to be created for the pipeline to Filebeat. This goes in the /etc/logstash/conf.d directory. 
+
+
+
+
+#############
+DOCKER ENGINE
+#############
+
+Docker Engine is installed in order to download and install Elasticsearch and Kibana in a faster, more effecient way with pre-set configurations. We opted to go for this in this project as we want easy and consistent automation of installations; the functionality of the SIEM stack is proof-of-concept only. 
+
+# Add Docker's official GPG key:
+sudo apt update
+sudo apt install ca-certificates curl       # Says they're already updated to latest version
+sudo install -m 0755 -d /etc/apt/keyrings
+sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+sudo chmod a+r /etc/apt/keyrings/docker.asc
+
+# Add the repository to Apt sources (there gotta be an easier way to automate this later):
+sudo tee /etc/apt/sources.list.d/docker.sources <<EOF
+Types: deb
+URIs: https://download.docker.com/linux/ubuntu
+Suites: $(. /etc/os-release && echo "${UBUNTU_CODENAME:-$VERSION_CODENAME}")
+Components: stable
+Architectures: $(dpkg --print-architecture)
+Signed-By: /etc/apt/keyrings/docker.asc
+EOF
+
+sudo apt update
+
+# Install docker packages
+sudo apt install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+
+
+
+
+######################
+ELASTICSEARCH + KIBANA
+######################
+
+# NOTE!!!
+At this point, docker runs as root, and we're vagrant user when ssh'd in. This mean we don't actually have all permissions for the next step. 
+AS OF MANUAL INSTALL TESTS, this is how we've solved it:
+
+1. Give vagrant user permissions
+sudo usermod -aG docker vagrant
+
+# Before step 2, exit and re-log in as user
+
+2. Install Elasticsearch and Kibana through Docker Engine
+curl -fsSL https://elastic.co/start-local | sh
+
 
 ########
 NGINX
@@ -67,6 +117,8 @@ sudo systemctl enable nginx
 
 3. Start Nginx
 sudo systemctl start nginx
+
+
 
 ########
 FILEBEAT

@@ -44,11 +44,11 @@ Vagrant.configure("2") do |config|
       #}
 
     # NY KOD - skapar SSH-nyckel och lägger den i delad mapp
-    ls.vm.provision "shell", privileged: false, inline: <<-SHELL
-      if [ ! -f ~/.ssh/id_ed25519 ]; then
-        #ssh-keygen -t rsa -N "" -f ~/.ssh/id_rsa
-        sudo -u vagrant ssh-keygen -t ed25519 \ -f /home/vagrant/.ssh/id_ed25519 \ -N "" -C "logstash-node"
-      fi
+    ls.vm.provision "shell", inline: <<-SHELL
+
+      
+      sudo -u vagrant ssh-keygen -t ed25519 \ -f /home/vagrant/.ssh/id_ed25519 \ -N "" -C "logstash-node"
+
       cp /home/vagrant/.ssh/id_ed25519.pub \ /vagrant/ansible_id_ed25519.pub
       chmod 600 ~/.ssh/id_ed25519
     SHELL
@@ -85,15 +85,15 @@ Vagrant.configure("2") do |config|
 
     # authorized_keys. Ansible kan nu SSH:a in.
 
-    mkdir -p /home/vagrant/.ssh
+      mkdir -p /home/vagrant/.ssh
 
-    cat /vagrant/ansible_id_ed25519.pub \ >> /home/vagrant/.ssh/authorized_keys
+      cat /vagrant/ansible_id_ed25519.pub \ >> /home/vagrant/.ssh/authorized_keys
 
-    chmod 700 /home/vagrant/.ssh
+      chmod 700 /home/vagrant/.ssh
 
-    chmod 600 /home/vagrant/.ssh/authorized_keys
+      chmod 600 /home/vagrant/.ssh/authorized_keys
 
-    chown -R vagrant:vagrant /home/vagrant/.ssh
+      chown -R vagrant:vagrant /home/vagrant/.ssh
   SHELL
 
   
@@ -113,7 +113,7 @@ Vagrant.configure("2") do |config|
 
       vb.name = "project-elk"
 
-      vb.memory = "1024" # ELK needs significant RAM - changed to 1 from 4 GB until programs are set up
+      vb.memory = "4096" # ELK needs significant RAM - changed to 1 from 4 GB until programs are set up
 
       vb.cpus = 1 # Changed to 1 from 2, for now
 
@@ -128,15 +128,15 @@ Vagrant.configure("2") do |config|
 
     # authorized_keys. Ansible kan nu SSH:a in.
 
-    mkdir -p /home/vagrant/.ssh
+      mkdir -p /home/vagrant/.ssh
 
-    cat /vagrant/ansible_id_ed25519.pub \ >> /home/vagrant/.ssh/authorized_keys
+      cat /vagrant/ansible_id_ed25519.pub \ >> /home/vagrant/.ssh/authorized_keys
 
-    chmod 700 /home/vagrant/.ssh
+      chmod 700 /home/vagrant/.ssh
 
-    chmod 600 /home/vagrant/.ssh/authorized_keys
+      chmod 600 /home/vagrant/.ssh/authorized_keys
 
-    chown -R vagrant:vagrant /home/vagrant/.ssh
+      chown -R vagrant:vagrant /home/vagrant/.ssh
   SHELL
 
   end
