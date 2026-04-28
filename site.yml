@@ -70,3 +70,62 @@
         enabled: yes
 
 
+- name: Setup Nginx on webserver
+  hosts: webserver
+  become: yes
+  tasks:
+    - name: Install Nginx
+      apt:
+        name: nginx
+        state: present
+        update_cache: yes
+
+    - name: Ensure Nginx is started and enabled
+      service:
+        name: nginx
+        state: started
+        enabled: yes
+
+    - name: Allow HTTP traffic through UFW
+      ufw:
+        rule: allow
+        port: '80'
+        proto: tcp
+
+
+- name: Setup Filebeat on webserver
+  hosts: webserver
+  become: yes
+  tasks:
+    - name: Install prerequisite packages
+      apt:
+        name:
+          - curl
+          - gnupg
+          - apt-transport-https
+          - wget
+        state: present
+        update_cache: yes
+
+    - name: Add Elastic GPG key
+      shell: wget -qO - https://artifacts.elastic.co/GPG-KEY-elasticsearch | gpg --dearmor -o /usr/share/keyrings/elastic-keyring.gpg
+      args:
+        creates: /usr/share/keyrings/elastic-keyring.gpg
+
+    - name: Add Elastic repository
+      apt_repository:
+        repo: "deb [signed-by=/usr/share/keyrings/elastic-keyring.gpg] https://artifacts.elastic.co/packages/9.x/apt stable main"
+        filename: elastic-9.x
+        state: present
+
+    - name: Install Filebeat
+      apt:
+        name: filebeat
+        state: present
+        update_cache: yes
+
+    - name: Ensure Filebeat is started and enabled
+      service:
+        name: filebeat
+        state: started
+        enabled: yes
