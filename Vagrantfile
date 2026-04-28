@@ -27,22 +27,6 @@ Vagrant.configure("2") do |config|
     ls.vm.provision "shell", inline: "apt-get update && apt-get install -y ansible"
 
 
-    # Installing Ansible on ls node, making it the control VM which all ansible commands will run from
-    # Vagrant will automatically install Ansible on this VM before running the playbook
-    #ls.vm.provision "ansible_local" do |ansible|
-
-      #ansible.playbook = "site.yml"
-
-      #ansible.install = true # This tells Vagrant to install Ansible via apt for you
-
-      #ansible.limit = "all"
-
-      #ansible.groups = {
-        #"elk_group"      => ["elk"],
-        #"logstash_group" => ["logstash"],
-        #"webserver_group"  => ["webserver"]
-      #}
-
     # NY KOD - skapar SSH-nyckel och lägger den i delad mapp
     ls.vm.provision "shell", inline: <<-SHELL
 
@@ -50,7 +34,6 @@ Vagrant.configure("2") do |config|
       sudo -u vagrant ssh-keygen -t ed25519 \ -f /home/vagrant/.ssh/id_ed25519 \ -N "" -C "logstash-node"
 
       cp /home/vagrant/.ssh/id_ed25519.pub \ /vagrant/ansible_id_ed25519.pub
-      chmod 600 ~/.ssh/id_ed25519
     SHELL
 
   end

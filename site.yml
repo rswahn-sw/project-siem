@@ -71,11 +71,19 @@
     # This adds vagrant to the user list of docker. This enables not only that ansible can install programs through docker as the vagrant user, 
     # but also that we can manually verify through SSH. 
 
+    - name: Ensure docker group exists
+      group:
+        name: docker
+        state: present
+
     - name: Add vagrant user to docker group
       user:
-      name: vagrant
-      groups: docker
-      append: yes
+        name: vagrant
+        groups: docker
+        append: yes
+
+    - name: Reset connection to pick up group changes
+      meta: reset_connection
 
     - name: Ensure Docker service is started and enabled
       service:
@@ -122,7 +130,7 @@
       become_user: "{{ elk_user }}"
 
     - name: Start ELK containers
-      shell: "./start"
+      shell: "./start.sh"
       args:
         chdir: "{{ elk_path }}"
       become_user: "{{ elk_user }}"
@@ -140,3 +148,18 @@
     - name: Display ELK Credentials
       debug:
         msg: "ELK is starting. Check {{ elk_path }}/.env for your passwords."
+
+    - name: Allow external access in .env
+      lineinfile:
+        path: "{{ elk_path }}/.env"
+        regexp: "{{ item.regexp }}"
+        line: "{{ item.line }}"
+      loop:
+        - { regexp: '^ES_LOCAL_URL=', line: 'ES_LOCAL_URL="http://0.0.0.0:9200"' }
+        - { regexp: '^KIBANA_LOCAL_URL=', line: 'KIBANA_LOCAL_URL="http://0.0.0.0:5601"' }
+
+    - name: Restart ELK containers to apply .env changes
+      shell: "docker compose down && ./start.sh"
+      args:
+        chdir: "{{ elk_path }}"
+      become_user: "{{ elk_user }}"
