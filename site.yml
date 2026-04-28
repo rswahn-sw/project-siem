@@ -129,6 +129,13 @@
         line: 'ES_JAVA_OPTS="-Xms2g -Xmx2g"'
       become_user: "{{ elk_user }}"
 
+    - name: Change Docker port binding from localhost to all interfaces
+      replace:
+        path: "{{ elk_path }}/docker-compose.yml"
+        regexp: '127\.0\.0\.1:'
+        replace: '0.0.0.0:'
+      become_user: "{{ elk_user }}"
+
     - name: Start ELK containers
       shell: "./start.sh"
       args:
@@ -142,7 +149,7 @@
     - name: Fetch credentials to host machine
       ansible.builtin.fetch:
         src: "{{ elk_path }}/.env"
-        dest: "./secrets.txt"
+        dest: "/vagrant/secrets.txt"
         flat: yes
 
     - name: Display ELK Credentials
