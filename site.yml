@@ -5,15 +5,15 @@
   become: yes
   tasks:
     # Running apt update on all machines, saying yes to prompts
-    #- name: Update apt package lists
-    #  shell: apt update -y
-    #  args:
-    #    warn: false  # Suppress warnings about apt lists being outdated
+    - name: Update apt package lists
+      shell: apt update -y
+      args:
+        warn: false  # Suppress warnings about apt lists being outdated
         
     # Running apt upgrade on all machines, saying yes to prompts
-    #- name: Upgrade all apt packages
-    #  shell: apt upgrade -y
-    #  register: upgrade_result  # Optional: Store output for later checks
+    - name: Upgrade all apt packages
+      shell: apt upgrade -y
+      register: upgrade_result  # Optional: Store output for later checks
 
     - name: Update apt cache
       apt:
@@ -22,7 +22,7 @@
 
 
 - name: Setup Docker for ELK
-  hosts: elk-node
+  hosts: elk
   become: yes
   tasks:
     - name: Install prerequisite packages
@@ -70,28 +70,3 @@
         enabled: yes
 
 
-
-
-
-# Setup the ELK stack
-#- name: Setup Elasticsearch and Kibana
-  #hosts: elk
-  #become: yes
-  #roles:
-    #- elasticsearch
-    #- kibana
-
-# Setup Logstash
-#- name: Setup Logstash Pipeline
-  #hosts: logstash
-  #become: yes
-  #roles:
-    #- logstash
-
-# Setup the monitored webserver
-#- name: Setup Webserver and Log Shippers
-  #hosts: webserver
-  #become: yes
-  #roles:
-    #- nginx
-    #- filebeat
