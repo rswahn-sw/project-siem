@@ -29,14 +29,16 @@
     - docker
     - elk
 
+- name: Install Logstash
+  hosts: logstash
+  become: yes
+  roles:
+    - logstash
+
 - name: Install Nginx Web Server
   hosts: webserver
   become: yes
   roles:
     - nginx
 
-- name: Install Logstash
-  hosts: logstash
-  become: yes
-  roles:
-    - logstash
+

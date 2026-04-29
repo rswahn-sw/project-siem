@@ -137,7 +137,7 @@ FILEBEAT
 wget -qO - https://artifacts.elastic.co/GPG-KEY-elasticsearch | sudo gpg --dearmor -o /usr/share/keyrings/elastic-keyring.gpg
 
 2. Install apt-transport-https package
-sudo apt-get install-apt-transport-https -y
+sudo apt-get install apt-transport-https -y
 
 3. Save the repository definition to /etc/apt/sources.list.d/elastic-9.x.list
 echo "deb [signed-by=/usr/share/keyrings/elastic-keyring.gpg] https://artifacts.elastic.co/packages/9.x/apt stable main" | sudo tee /etc/apt/sources.list.d/elastic-9.x.list
@@ -162,5 +162,106 @@ Summary of Data Flow
 
 
 
+# SIEM-in-a-box
+An automated security monitoring lab with three? VMs provisioned via Vagrant and configured with Ansible, featuring an Nginx web server, Logstash log pipeline, and an ELK stack for log analysis.
+
+## Table of contents
+- Architecture
+- Environments and IP addresses
+- Folder structure
+- Components
+- Requirements and prerequisites
+- Getting started
+- Secrets
+- Security measures
+- Security analysis
+- Verification
+- Design choices and motivation
+
+## Architecture
+ Instruktion: Lägg in ett arkitekturdiagram här. Du kan använda något av följande alternativ:
+
+draw.io / diagrams.net — exportera som PNG och lägg filen i docs/architecture.png, referera sedan med bildsyntaxen nedan
+draw.io XML — spara filen som docs/architecture.drawio (kan öppnas och redigeras direkt på GitHub)
+ASCII-diagram — rita direkt i Markdown om du föredrar det, se exemplet nedan
+Ta bort denna instruktionsruta när du är klar.
+
+## Environments and IP addresses
+
+| VM | Role | IP address | Port forwarding | Description |
+|---|---|---|---|---|
+| elk | SIEM node | 192.168.56.10 | ? | Elasticsearch + Kibana, stores and visualizes logs |
+| logstash | Ansible controller + Log pipeline | 192.168.56.11 | — | Runs Ansible, receives logs from Filebeat and forwards to Elasticsearch |
+| webserver | Monitored web server | 192.168.56.12 | — | Nginx + Filebeat, sends logs to Logstash |
+
+## Folder structure
+```
+repo/
+├── Vagrantfile
+├── inventory.ini
+├── ansible.cfg
+├── site.yml
+├── README.md
+├── .gitignore
+└── roles/
+    └── nginx/
+        ├── files/
+        └── tasks/
+            └── main.yml
+```
+## Components
+
+### Vagrantfile
+Defines three? virtual machines in VirtualBox with a shared host-only network (192.168.56.0/24). Logstash starts last so that Ansible can SSH into the other VMs.
+
+### ansible.cfg
+
+### inventory.ini
+Groups the servers into [logstash], [elk] and [webserver]. Specifies IP addresses and vagrant as the Ansible user. Logstash uses ansible_connection=local since Ansible runs directly on that node.
+
+### site.yml
+Playbook
+
+Fler playbooks?
+
+### Nginx
+Installs Nginx on the webserver node and allows HTTP traffic through UFW on port 80.
+
+### Filebeat
+Installs Filebeat on the webserver node, (collects Nginx logs and forwards them to Logstash.)
+
+### Elasticsearch
+Stores and indexes logs received from Logstash.
+
+### Kibana
+Web interface for visualizing and searching logs stored in Elasticsearch. 
 
 
+## Requirements and prerequisites
+Software that must be installed on the Windows host:
+
+* [VirtualBox](https://www.virtualbox.org/) — (tested with version 7.x)
+* [Vagrant](https://www.vagrantup.com/) — (tested with version 2.x)
+* [Git](https://git-scm.com/)
+
+Hardware requirements:
+
+* At least ? GB RAM (project uses approximately 6? GB in total)
+* At least 20 GB free disk space ??
+
+## Getting started
+
+
+## Secrets
+
+
+## Security measures
+
+
+## Security analysis
+
+
+## Verification
+
+
+## Design choices and motivation
