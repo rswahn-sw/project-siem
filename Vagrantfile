@@ -10,7 +10,7 @@ Vagrant.configure("2") do |config|
   # This VM will filter logs and send it to the SIEM VM
   config.vm.define "logstash" do |ls|
 
-    ls.vm.hostname = "logstash-node"
+    ls.vm.hostname = "logstash"
 
     ls.vm.network "private_network", ip: "192.168.56.11"
 
@@ -45,7 +45,7 @@ Vagrant.configure("2") do |config|
   # This VM is the target to be monitored
   config.vm.define "webserver" do |web|
 
-    web.vm.hostname = "web-server"
+    web.vm.hostname = "webserver"
 
     web.vm.network "private_network", ip: "192.168.56.12"
 
@@ -88,7 +88,7 @@ Vagrant.configure("2") do |config|
   # Controller is created last so that it can use Ansible on the other already-created machines
   config.vm.define "elk" do |elk|
 
-    elk.vm.hostname = "elk-node"
+    elk.vm.hostname = "elk"
 
     elk.vm.network "private_network", ip: "192.168.56.10"
 
