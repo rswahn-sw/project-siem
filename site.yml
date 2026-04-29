@@ -4,13 +4,14 @@
   hosts: all
   become: yes
   tasks:
-    # Running apt update on all machines, saying yes to prompts
+
+    # Run apt update on all machines, saying yes to prompts
     - name: Update apt package lists
       shell: apt update -y
       args:
         warn: false  # Suppress warnings about apt lists being outdated
         
-    # Running apt upgrade on all machines, saying yes to prompts
+    # Run apt upgrade on all machines, saying yes to prompts
     - name: Upgrade all apt packages
       shell: apt upgrade -y
       register: upgrade_result  # Optional: Store output for later checks
@@ -20,6 +21,8 @@
         update_cache: yes
         cache_valid_time: 3600
 
+# Install Docker Engine on elk VM. Docker Engine will install Elasticsearch and Kibana later.
+# Starts by installing the required packages. 
 
 - name: Setup Docker for ELK
   hosts: elk
@@ -33,6 +36,8 @@
           - gnupg
         state: present
         update_cache: yes
+
+
 
     - name: Create directory for Docker GPG key
       file:
@@ -63,10 +68,105 @@
         state: present
         update_cache: yes
 
+    # This adds vagrant to the user list of docker. This enables not only that ansible can install programs through docker as the vagrant user, 
+    # but also that we can manually verify through SSH. 
+
+    - name: Ensure docker group exists
+      group:
+        name: docker
+        state: present
+
+    - name: Add vagrant user to docker group
+      user:
+        name: vagrant
+        groups: docker
+        append: yes
+
+    - name: Reset connection to pick up group changes
+      meta: reset_connection
+
     - name: Ensure Docker service is started and enabled
       service:
         name: docker
         state: started
         enabled: yes
 
+# Install Elasticsearch and Kibana through Docker Engine. 
+# Docker will run through the vagrant user. 
 
+- name: Deploy ELK via Start-Local Script
+  hosts: elk
+  become: yes
+  vars:
+    elk_user: vagrant
+    elk_path: "/home/{{ elk_user }}/elastic-start-local"
+
+  tasks:
+    - name: Download the Elastic start-local script
+      get_url:
+        url: https://elastic.co/start-local
+        dest: /tmp/start-local.sh
+        mode: '0755'
+
+    - name: Execute start-local script as vagrant user
+      shell: "bash /tmp/start-local.sh"
+      args:
+        chdir: "/home/{{ elk_user }}"
+        creates: "{{ elk_path }}" # Only runs if the folder doesn't exist
+      become_user: "{{ elk_user }}"
+
+    - name: Fix Memory Mapping (Host Level)
+      sysctl:
+        name: vm.max_map_count
+        value: '262144'
+        state: present
+        reload: yes
+
+    - name: Limit JVM Heap in .env (Prevent OOM Error 137)
+      lineinfile:
+        path: "{{ elk_path }}/.env"
+        regexp: '^ES_JAVA_OPTS='
+        line: 'ES_JAVA_OPTS="-Xms2g -Xmx2g"'
+      become_user: "{{ elk_user }}"
+
+    - name: Change Docker port binding from localhost to all interfaces
+      replace:
+        path: "{{ elk_path }}/docker-compose.yml"
+        regexp: '127\.0\.0\.1:'
+        replace: '0.0.0.0:'
+      become_user: "{{ elk_user }}"
+
+    - name: Start ELK containers
+      shell: "./start.sh"
+      args:
+        chdir: "{{ elk_path }}"
+      become_user: "{{ elk_user }}"
+      register: elk_start_output
+
+    # The credentials created through installations will be put on the elk host. We need these to log into the SIEM.
+    # This task copies them to a local file outside the VM; secrets.txt
+
+    - name: Fetch credentials to host machine
+      ansible.builtin.fetch:
+        src: "{{ elk_path }}/.env"
+        dest: "/vagrant/secrets.txt"
+        flat: yes
+
+    - name: Display ELK Credentials
+      debug:
+        msg: "ELK is starting. Check {{ elk_path }}/.env for your passwords."
+
+    - name: Allow external access in .env
+      lineinfile:
+        path: "{{ elk_path }}/.env"
+        regexp: "{{ item.regexp }}"
+        line: "{{ item.line }}"
+      loop:
+        - { regexp: '^ES_LOCAL_URL=', line: 'ES_LOCAL_URL="http://0.0.0.0:9200"' }
+        - { regexp: '^KIBANA_LOCAL_URL=', line: 'KIBANA_LOCAL_URL="http://0.0.0.0:5601"' }
+
+    - name: Restart ELK containers to apply .env changes
+      shell: "docker compose down && ./start.sh"
+      args:
+        chdir: "{{ elk_path }}"
+      become_user: "{{ elk_user }}"
