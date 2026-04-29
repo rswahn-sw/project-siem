@@ -36,3 +36,9 @@
   become: yes
   roles:
     - nginx
+
+- name: Setup Filebeat on webserver
+  hosts: webserver
+  become: yes
+  roles:
+    - filebeat
