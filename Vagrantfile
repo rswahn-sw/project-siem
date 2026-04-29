@@ -10,7 +10,7 @@ Vagrant.configure("2") do |config|
   # This VM will filter logs and send it to the SIEM VM
   config.vm.define "logstash" do |ls|
 
-    ls.vm.hostname = "logstash-node"
+    ls.vm.hostname = "logstash"
 
     ls.vm.network "private_network", ip: "192.168.56.11"
 
@@ -27,22 +27,6 @@ Vagrant.configure("2") do |config|
     ls.vm.provision "shell", inline: "apt-get update && apt-get install -y ansible"
 
 
-    # Installing Ansible on ls node, making it the control VM which all ansible commands will run from
-    # Vagrant will automatically install Ansible on this VM before running the playbook
-    #ls.vm.provision "ansible_local" do |ansible|
-
-      #ansible.playbook = "site.yml"
-
-      #ansible.install = true # This tells Vagrant to install Ansible via apt for you
-
-      #ansible.limit = "all"
-
-      #ansible.groups = {
-        #"elk_group"      => ["elk"],
-        #"logstash_group" => ["logstash"],
-        #"webserver_group"  => ["webserver"]
-      #}
-
     # NY KOD - skapar SSH-nyckel och lägger den i delad mapp
     ls.vm.provision "shell", inline: <<-SHELL
 
@@ -50,7 +34,6 @@ Vagrant.configure("2") do |config|
       sudo -u vagrant ssh-keygen -t ed25519 \ -f /home/vagrant/.ssh/id_ed25519 \ -N "" -C "logstash-node"
 
       cp /home/vagrant/.ssh/id_ed25519.pub \ /vagrant/ansible_id_ed25519.pub
-      chmod 600 ~/.ssh/id_ed25519
     SHELL
 
   end
@@ -62,7 +45,7 @@ Vagrant.configure("2") do |config|
   # This VM is the target to be monitored
   config.vm.define "webserver" do |web|
 
-    web.vm.hostname = "web-server"
+    web.vm.hostname = "webserver"
 
     web.vm.network "private_network", ip: "192.168.56.12"
 
@@ -105,7 +88,7 @@ Vagrant.configure("2") do |config|
   # Controller is created last so that it can use Ansible on the other already-created machines
   config.vm.define "elk" do |elk|
 
-    elk.vm.hostname = "elk-node"
+    elk.vm.hostname = "elk"
 
     elk.vm.network "private_network", ip: "192.168.56.10"
 

@@ -27,6 +27,15 @@
     3.2. Logstash - Pipeline configuration file (.conf)
     3.3. Webserver - Filebeat configuration file (.yml)
 
+----------------------------
+    COPY DIRECTORY TO VM
+----------------------------
+
+1. Run vagrant up for relevant VMs to be started
+2. ssh into VM with vagrant ssh <VM name>
+3. Copy the folder to VM by using cp -R /vagrant <name of folder>
+4. Enter the new folder with cd <name of folder>
+5. Run the playbook with ansible-playbook site.yml
 
 
 
@@ -64,8 +73,8 @@ DOCKER ENGINE
 Docker Engine is installed in order to download and install Elasticsearch and Kibana in a faster, more effecient way with pre-set configurations. We opted to go for this in this project as we want easy and consistent automation of installations; the functionality of the SIEM stack is proof-of-concept only. 
 
 # Add Docker's official GPG key:
-sudo apt update
-sudo apt install ca-certificates curl       # Says they're already updated to latest version
+sudo apt update         # Says they're already updated to latest version
+sudo apt install ca-certificates curl       
 sudo install -m 0755 -d /etc/apt/keyrings
 sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
 sudo chmod a+r /etc/apt/keyrings/docker.asc
