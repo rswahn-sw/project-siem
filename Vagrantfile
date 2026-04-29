@@ -18,14 +18,22 @@ Vagrant.configure("2") do |config|
 
       vb.name = "project-logstash"
 
-      vb.memory = "512"
+      vb.memory = "2048"
 
       vb.cpus = 1
 
     end
 
-    ls.vm.provision "shell", inline: "apt-get update && apt-get install -y ansible"
-
+    #ls.vm.provision "shell", inline: "apt-get update && apt-get install -y ansible"
+    # Installs the latest version of Ansible from the official Ansible PPA. 
+    # This is necessary for the ansible-playbook command to work on this VM, which is the Ansible control node.
+    ls.vm.provision "shell", inline: <<-SHELL
+      export DEBIAN_FRONTEND=noninteractive
+      apt-get update
+      apt-get install -y software-properties-common
+      apt-add-repository --yes --update ppa:ansible/ansible
+      apt-get install -y ansible
+    SHELL
 
     # NY KOD - skapar SSH-nyckel och lägger den i delad mapp
     ls.vm.provision "shell", inline: <<-SHELL

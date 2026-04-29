@@ -9,6 +9,8 @@
     state: present
     update_cache: yes
 
+# The GPG key make sure the download of Docker is genuine and not tampered with.
+
 - name: Create directory for Docker GPG key
   ansible.builtin.file:
     path: /etc/apt/keyrings
@@ -22,6 +24,8 @@
     state: present
 
 - name: Add Docker Repository to sources.list
+  # There's a variable here that looks for the VM OS version. 
+  # This allows the same playbook to work on different versions of Ubuntu without modification.
   ansible.builtin.apt_repository:
     repo: "deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable"
     filename: docker
