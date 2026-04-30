@@ -1,0 +1,58 @@
+---
+- name: Install OpenJDK (Java (Required for Logstash))
+  ansible.builtin.apt:
+    name: openjdk-17-jre-headless
+    state: present
+    update_cache: yes
+
+# The GPG key make sure the download of Logstash is genuine and not tampered with.
+
+- name: Add Elastic GPG Key
+  ansible.builtin.apt_key:
+    url: https://artifacts.elastic.co/GPG-KEY-elasticsearch
+    state: present
+
+- name: Add Logstash 9.x Repository
+  ansible.builtin.apt_repository:
+    repo: "deb https://artifacts.elastic.co/packages/9.x/apt stable main"
+    state: present
+    filename: elastic-9.x
+
+- name: Install Logstash 9.3.3
+  ansible.builtin.apt:
+    name: logstash=1:9.3.3-1
+    state: present
+    update_cache: yes
+    allow_downgrade: yes
+
+- name: Ensure Logstash service is started and enabled
+  ansible.builtin.service:
+    name: logstash
+    state: started
+    enabled: yes
+
+- name: Configure Logstash to listen for Filebeat
+  ansible.builtin.copy:
+    dest: /etc/logstash/conf.d/02-beats-input.conf
+    content: |
+      input {
+        beats {
+          port => 5044
+        }
+      }
+
+      filter {
+        # This is where you can add parsing logic (like Grok) later
+        if [type] == "apache" {
+          mutate { add_tag => ["web_server_logs"] }
+        }
+      }
+
+      output {
+        elasticsearch {
+          hosts => ["http://192.168.56.10:9200"]
+          index => "filebeat-logs-%{+YYYY.MM.dd}"
+        }
+      }
+    mode: '0644'
+  notify: Restart Logstash

@@ -8,8 +8,6 @@
     # Run apt update on all machines, saying yes to prompts
     - name: Update apt package lists
       shell: apt update -y
-      args:
-        warn: false  # Suppress warnings about apt lists being outdated
         
     # Run apt upgrade on all machines, saying yes to prompts
     - name: Upgrade all apt packages
@@ -31,14 +29,24 @@
     - docker
     - elk
 
+- name: Install Logstash
+  hosts: logstash
+  become: yes
+  roles:
+    - logstash
+
 - name: Install Nginx Web Server
   hosts: webserver
   become: yes
   roles:
     - nginx
 
+<<<<<<< HEAD
 - name: Setup Filebeat on webserver
   hosts: webserver
   become: yes
   roles:
     - filebeat
+=======
+
+>>>>>>> origin/main
