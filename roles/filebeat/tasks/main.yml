@@ -1,0 +1,33 @@
+---
+- name: Install prerequisite packages
+  apt:
+    name:
+      - curl
+      - gnupg
+      - apt-transport-https
+      - wget
+    state: present
+    update_cache: yes
+
+- name: Add Elastic GPG key
+  shell: wget -qO - https://artifacts.elastic.co/GPG-KEY-elasticsearch | gpg --dearmor -o /usr/share/keyrings/elastic-keyring.gpg
+  args:
+    creates: /usr/share/keyrings/elastic-keyring.gpg
+
+- name: Add Elastic repository
+  apt_repository:
+    repo: "deb [signed-by=/usr/share/keyrings/elastic-keyring.gpg] https://artifacts.elastic.co/packages/9.x/apt stable main"
+    filename: elastic-9.x
+    state: present
+
+- name: Install Filebeat
+  apt:
+    name: filebeat
+    state: present
+    update_cache: yes
+
+- name: Ensure Filebeat is started and enabled
+  service:
+    name: filebeat
+    state: started
+    enabled: yes

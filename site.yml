@@ -41,12 +41,8 @@
   roles:
     - nginx
 
-<<<<<<< HEAD
 - name: Setup Filebeat on webserver
   hosts: webserver
   become: yes
   roles:
     - filebeat
-=======
-
->>>>>>> origin/main
