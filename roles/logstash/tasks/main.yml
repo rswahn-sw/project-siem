@@ -43,6 +43,7 @@
 
       filter {
         # This is where you can add parsing logic (like Grok) later
+        # For now, we just tag incoming logs as "web_server_logs" for easier searching in Kibana
         if [type] == "apache" {
           mutate { add_tag => ["web_server_logs"] }
         }

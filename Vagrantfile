@@ -3,11 +3,12 @@
 
 Vagrant.configure("2") do |config|
  
-  # Use Ubuntu 22.04 (Jammy Jellyfish) as base image for all VMs
+  # Use Ubuntu 22.04 (Jammy Jellyfish) as base image for all VMs.
   config.vm.box = "ubuntu/jammy64"
 
-  # --- FILTER VM (Logstash) ---
-  # This VM will filter logs and send it to the SIEM VM
+  # --- FILTER AND CONTROLVM (Logstash) ---
+  # This VM will filter logs and send it to the SIEM VM.
+  # It will also run Ansible to set up the other machines, so it is created first.
   config.vm.define "logstash" do |ls|
 
     ls.vm.hostname = "logstash"
@@ -18,27 +19,30 @@ Vagrant.configure("2") do |config|
 
       vb.name = "project-logstash"
 
-      vb.memory = "2048"
+      vb.memory = "4096"
 
-      vb.cpus = 1
+      vb.cpus = 2
 
     end
 
-    #ls.vm.provision "shell", inline: "apt-get update && apt-get install -y ansible"
     # Installs the latest version of Ansible from the official Ansible PPA. 
-    # This is necessary for the ansible-playbook command to work on this VM, which is the Ansible control node.
+    # This is necessary for the ansible-playbook command to work on this VM.
     ls.vm.provision "shell", inline: <<-SHELL
+
       export DEBIAN_FRONTEND=noninteractive
+      
       apt-get update
+      
       apt-get install -y software-properties-common
+      
       apt-add-repository --yes --update ppa:ansible/ansible
+      
       apt-get install -y ansible
     SHELL
 
-    # NY KOD - skapar SSH-nyckel och lägger den i delad mapp
+    # Creates SSH key pair for Vagrant and copies them to the shared folder.
     ls.vm.provision "shell", inline: <<-SHELL
 
-      
       sudo -u vagrant ssh-keygen -t ed25519 \ -f /home/vagrant/.ssh/id_ed25519 \ -N "" -C "logstash-node"
 
       cp /home/vagrant/.ssh/id_ed25519.pub \ /vagrant/ansible_id_ed25519.pub
@@ -47,10 +51,8 @@ Vagrant.configure("2") do |config|
   end
   
 
-
-
   # --- WEBSERVER VM ---
-  # This VM is the target to be monitored
+  # This VM hosts the webserver to be monitored, and sends logs through Filebeat.
   config.vm.define "webserver" do |web|
 
     web.vm.hostname = "webserver"
@@ -67,16 +69,14 @@ Vagrant.configure("2") do |config|
 
     end
 
-    # NY KOD - hämtar ls's nyckel från delad mapp
+    # Adds the SSH key from the shared folder. 
     web.vm.provision "shell", inline: <<-SHELL
-    # Create directory if it doesn't exist
 
-
-    # Lägg till kontrollnodens publika nyckel i
-
-    # authorized_keys. Ansible kan nu SSH:a in.
+      # Create directory if it doesn't exist
 
       mkdir -p /home/vagrant/.ssh
+
+      # Add the public key from the shared folder to authorized_keys, and change permissions so that Ansible can SSH in.
 
       cat /vagrant/ansible_id_ed25519.pub \ >> /home/vagrant/.ssh/authorized_keys
 
@@ -92,8 +92,7 @@ Vagrant.configure("2") do |config|
   end
 
   # --- "ELK" VM (Elasticsearch & Kibana) ---
-  # This is the ansible controller, and the one running the SIEM tools
-  # Controller is created last so that it can use Ansible on the other already-created machines
+  # This VM runs the SIEM stack (Elasticsearch and Kibana) and receives logs from the Logstash VM.
   config.vm.define "elk" do |elk|
 
     elk.vm.hostname = "elk"
@@ -110,16 +109,14 @@ Vagrant.configure("2") do |config|
 
     end
 
-    # NY KOD - hämtar elk's nyckel från delad mapp
+    # Adds the SSH key from the shared folder.
     elk.vm.provision "shell", inline: <<-SHELL
-    # Create directory if it doesn't exist
 
-
-    # Lägg till kontrollnodens publika nyckel i
-
-    # authorized_keys. Ansible kan nu SSH:a in.
+      # Create directory if it doesn't exist
 
       mkdir -p /home/vagrant/.ssh
+
+      # Add the public key from the shared folder to authorized_keys, and change permissions so that Ansible can SSH in.
 
       cat /vagrant/ansible_id_ed25519.pub \ >> /home/vagrant/.ssh/authorized_keys
 

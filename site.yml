@@ -20,7 +20,7 @@
         cache_valid_time: 3600
 
 # THE OFFICIAL ANSIBLE RULEBOOK STRUCTURE
-# Points to other .yml files in the roles directory. This is the file that ansible-playbook will run.
+# Points to other .yml files in the roles directory. These are the files that ansible-playbook will run.
 # The ELK stack starts by installing Docker Engine. Then it installes elasticsearch and kibana through docker. 
 - name: Install ELK Stack
   hosts: elk
