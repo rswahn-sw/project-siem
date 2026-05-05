@@ -163,7 +163,7 @@ Summary of Data Flow
 
 
 # SIEM-in-a-box
-An automated security monitoring lab with three? VMs provisioned via Vagrant and configured with Ansible, featuring an Nginx web server, Logstash log pipeline, and an ELK stack for log analysis.
+An automated security monitoring lab with three VMs provisioned via Vagrant and configured with Ansible, featuring an Nginx web server, Logstash log pipeline, and an ELK stack for log analysis.
 
 ## Table of contents
 - Architecture
@@ -188,11 +188,11 @@ Ta bort denna instruktionsruta när du är klar.
 
 ## Environments and IP addresses
 
-| VM | Role | IP address | Port forwarding | Description |
+| VM | Role | IP address | Ports in use | Description |
 |---|---|---|---|---|
-| elk | SIEM node | 192.168.56.10 | ? | Elasticsearch + Kibana, stores and visualizes logs |
-| logstash | Ansible controller + Log pipeline | 192.168.56.11 | — | Runs Ansible, receives logs from Filebeat and forwards to Elasticsearch |
-| webserver | Monitored web server | 192.168.56.12 | — | Nginx + Filebeat, sends logs to Logstash |
+| elk | SIEM node | 192.168.56.10 | 9200 | Elasticsearch + Kibana, stores and visualizes logs |
+| logstash | Ansible controller + Log pipeline | 192.168.56.11 | 5044 | Runs Ansible, receives logs from Filebeat and forwards to Elasticsearch |
+| webserver | Monitored web server | 192.168.56.12 | 80 | Nginx + Filebeat, sends logs to Logstash |
 
 ## Folder structure
 ```
@@ -212,30 +212,42 @@ repo/
 ## Components
 
 ### Vagrantfile
-Defines three? virtual machines in VirtualBox with a shared host-only network (192.168.56.0/24). Logstash starts last so that Ansible can SSH into the other VMs.
+Defines three virtual machines in VirtualBox with a shared host-only network (192.168.56.0/24). Logstash starts first so that Ansible can SSH into the other VMs.
 
 ### ansible.cfg
+Disables host key checking and specifies inventory.ini as the default inventory file.
 
 ### inventory.ini
 Groups the servers into [logstash], [elk] and [webserver]. Specifies IP addresses and vagrant as the Ansible user. Logstash uses ansible_connection=local since Ansible runs directly on that node.
 
 ### site.yml
-Playbook
+Playbook that isntalls and configures all components in order: 
+1. **Update** — runs apt update and upgrade on all nodes
+2. **ELK** — installs Docker, Elasticsearch and Kibana on the elk node
+3. **Logstash** — installs and configures Logstash on the logstash node
+4. **Nginx** — installs Nginx web server on the webserver node
+5. **Filebeat** — installs and configures Filebeat to ship Nginx logs to Logstash
 
-Fler playbooks?
+### Logstash Role
+Installs Java (required by Logstash), adds the Elastic repository and installs Logstash 9.3.3. Configures a pipeline that:
+- **Input** — listens for incoming logs from Filebeat on port 5044
+- **Filter** — tags incoming logs as `web_server_logs` for easier searching in Kibana
+- **Output** — forwards processed logs to Elasticsearch on port 9200
 
-### Nginx
+### Nginx Role
 Installs Nginx on the webserver node and allows HTTP traffic through UFW on port 80.
 
-### Filebeat
-Installs Filebeat on the webserver node, (collects Nginx logs and forwards them to Logstash.)
+### Filebeat Role
+Installs Filebeat on the webserver node, (collects Nginx logs and forwards them to Logstash).
 
-### Elasticsearch
+### Elasticsearch Role
 Stores and indexes logs received from Logstash.
 
-### Kibana
+### Kibana Role
 Web interface for visualizing and searching logs stored in Elasticsearch. 
 
+### Docker Role
+Installs Docker Engine on the elk node. Adds the official Docker GPG key and repository, installs Docker Engine with all required plugins, and adds the vagrant user to the docker group so that Docker commands can be run without sudo. Elasticsearch and Kibana run as Docker containers.
 
 ## Requirements and prerequisites
 Software that must be installed on the Windows host:
@@ -247,7 +259,9 @@ Software that must be installed on the Windows host:
 Hardware requirements:
 
 * At least ? GB RAM (project uses approximately 6? GB in total)
-* At least 20 GB free disk space ??
+* At least 10 GB free disk space ??
+
+Secret.txt
 
 ## Getting started
 
@@ -257,8 +271,66 @@ Hardware requirements:
 
 ## Security measures
 
+| Measure | Where | How to verify |
+|---|---|---|
+| Private network | All VMs | VMs only communicate on 192.168.56.0/24, not accessible from internet |
+| GPG key verification | All VMs | Packages verified with official GPG keys before installation |
+| Elasticsearch not exposed externally | ELK node | Only accessible on 192.168.56.10:9200 within private network |
+| Logstash not exposed externally | Logstash node | Only accessible on 192.168.56.11:5044 within private network |
+
+
 
 ## Security analysis
+
+### Remaining vulnerabilities
+
+**Vulnerability 1: Unencrypted communication**
+
+All traffic between VMs uses unencrypted HTTP. An attacker with access to the internal network could read or manipulate the traffic.
+
+*Remediation*: Configure TLS certificates for communication between Filebeat, Logstash, Elasticsearch and Kibana.
+
+*Accepted in this environment because*: The private network (192.168.56.0/24) is isolated from the internet and only accessible from the host machine. Risk is considered low in a lab environment.
+
+**Vulnerability 2: Host key checking disabled**
+
+`host_key_checking = False` in ansible.cfg means Ansible does not verify the identity of the hosts it connects to, which could allow man-in-the-middle attacks.
+
+*Remediation*: Enable host key checking and manually distribute known host keys before running Ansible, or use a pre-configured known_hosts file.
+
+*Accepted in this environment because*: In a local lab environment with no external access, the risk is considered acceptable.
+
+**Vulnerability 3: No firewall**
+
+No firewall (UFW) is configured on the VMs, meaning all ports are open within the private network.
+
+*Remediation*: Configure UFW on all VMs to only allow necessary ports.
+
+*Accepted in this environment because*: The private network is isolated from the internet and only accessible from the host machine.
+
+**Vulnerability 4: Ansible runs as root**
+
+Ansible runs all tasks with `become: yes` (root privileges) instead of a dedicated service user. If the playbook is compromised, an attacker would have full root access to all VMs.
+
+*Remediation*: Create a dedicated Ansible user with only the necessary privileges.
+
+*Accepted in this environment because*: In a local lab environment this is acceptable for simplicity.
+
+**Vulnerability 5: No log rotation**
+
+Nginx access logs can grow indefinitely and potentially fill the disk, causing services to stop working.
+
+*Remediation*: Configure logrotate to automatically rotate and compress log files.
+
+*Accepted in this environment because*: In a short-lived lab environment disk space is not a critical concern.
+
+**Vulnerability 6: All logs forwarded without filtering**
+
+Filebeat is configured to forward all Nginx logs to Logstash without any filtering or rate limiting, which could overwhelm the pipeline with unnecessary data.
+
+*Remediation*: Configure Filebeat and Logstash filters to only forward relevant log entries and add rate limiting.
+
+*Accepted in this environment because*: In a lab environment with low traffic, the volume of logs is not a concern.
 
 
 ## Verification
