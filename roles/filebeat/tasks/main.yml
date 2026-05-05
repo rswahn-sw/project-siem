@@ -32,7 +32,7 @@
     state: started
     enabled: yes
 
-    - name: Configure Filebeat
+- name: Configure Filebeat
   copy:
     content: |
       filebeat.inputs:
@@ -41,6 +41,7 @@
           enabled: true
           paths:
             - /var/log/nginx/access.log
+          prospector.scanner.fingerprint.length: 64  
 
       output.logstash:
         hosts: ["192.168.56.11:5044"]
@@ -48,3 +49,15 @@
     owner: root
     group: root
     mode: '0644'
+
+- name: Add filebeat user to adm group
+  user:
+    name: filebeat
+    groups: adm
+    append: yes
+
+- name: Ensure nginx log directory is accessible, then restart Filebeat
+  file:
+    path: /var/log/nginx
+    mode: '0755' # Or '0750' if group is adm
+  notify: Restart Filebeat
