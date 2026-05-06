@@ -45,19 +45,23 @@
 
       output.logstash:
         hosts: ["192.168.56.11:5044"]
+
+      logging.level: info
+      logging.to_files: true
+      logging.files:
+        path: /var/log/filebeat
+        name: filebeat
+        keepfiles: 7
+        permissions: 0640
+    
     dest: /etc/filebeat/filebeat.yml
     owner: root
     group: root
     mode: '0644'
 
-- name: Add filebeat user to adm group
+- name: Add filebeat user to adm group and restart Filebeat
   user:
     name: filebeat
     groups: adm
     append: yes
-
-- name: Ensure nginx log directory is accessible, then restart Filebeat
-  file:
-    path: /var/log/nginx
-    mode: '0755' # Or '0750' if group is adm
   notify: Restart Filebeat
