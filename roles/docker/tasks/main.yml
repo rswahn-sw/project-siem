@@ -3,58 +3,65 @@
 - name: Install Docker Engine prerequisites
   ansible.builtin.apt:
     name:
-      - ca-certificates
-      - curl
-      - gnupg
+      - ca-certificates     # Ensures authenticity of SSL/TLS connections
+      - curl                # What will download the GPG keys
+      - gnupg               # Writes and checks digital signatures to ensure authenticity
     state: present
     update_cache: yes
 
 # The GPG key make sure the download of Docker is genuine and not tampered with.
-
 - name: Create directory for Docker GPG key
   ansible.builtin.file:
     path: /etc/apt/keyrings
     state: directory
     mode: '0755'
 
+# Downloads and adds Docker's official GPG key to verify package authenticity
 - name: Add Docker official GPG key
   ansible.builtin.apt_key:
     url: https://download.docker.com/linux/ubuntu/gpg
     keyring: /etc/apt/keyrings/docker.gpg
     state: present
 
+
+
 - name: Add Docker Repository to sources.list
-  # There's a variable here that looks for the VM OS version. 
-  # This allows the same playbook to work on different versions of Ubuntu without modification.
   ansible.builtin.apt_repository:
+  # ansible_distribution_release automatically detects Ubuntu version (e.g. jammy)
+  # This allows the same playbook to work on different Ubuntu versions
     repo: "deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable"
     filename: docker
     state: present
 
+# Installs Docker Engine with all required plugins
 - name: Install Docker Engine and Plugins
   ansible.builtin.apt:
     name:
-      - docker-ce
-      - docker-ce-cli
-      - containerd.io
-      - docker-buildx-plugin
-      - docker-compose-plugin
+      - docker-ce              # docker-ce: Docker Community Edition
+      - docker-ce-cli          # docker-ce-cli: command line tool
+      - containerd.io          # containerd.io: container runtime
+      - docker-buildx-plugin   # docker-buildx-plugin: for building images
+      - docker-compose-plugin  # docker-compose-plugin: for running multiple containers
     state: present
     update_cache: yes
+
 
 - name: Ensure docker group exists
   ansible.builtin.group:
     name: docker
     state: present
 
+# Adds vagrant user to docker group so Docker commands can be run without sudo
 - name: Add vagrant user to docker group
   ansible.builtin.user:
     name: vagrant
     groups: docker
     append: yes
 
+
 - name: Reset connection to pick up group changes
   ansible.builtin.meta: reset_connection
+
 
 - name: Ensure Docker service is started and enabled
   ansible.builtin.service:

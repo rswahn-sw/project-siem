@@ -190,13 +190,13 @@ Ta bort denna instruktionsruta när du är klar.
 
 | VM | Role | IP address | Ports in use | Description |
 |---|---|---|---|---|
-| elk | SIEM node | 192.168.56.10 | 9200 | Elasticsearch + Kibana, stores and visualizes logs |
+| elk | SIEM node | 192.168.56.10 | 9200 5601 | Elasticsearch + Kibana, stores and visualizes logs |
 | logstash | Ansible controller + Log pipeline | 192.168.56.11 | 5044 | Runs Ansible, receives logs from Filebeat and forwards to Elasticsearch |
 | webserver | Monitored web server | 192.168.56.12 | 80 | Nginx + Filebeat, sends logs to Logstash |
 
 ## Folder structure
 ```
-repo/
+project-siem/
 ├── Vagrantfile
 ├── inventory.ini
 ├── ansible.cfg
@@ -204,8 +204,23 @@ repo/
 ├── README.md
 ├── .gitignore
 └── roles/
+    ├── docker/
+    │   └── tasks/
+    │       └── main.yml
+    ├── elk/
+    │   └── tasks/
+    │       └── main.yml
+    ├── filebeat/
+    │   └── tasks/
+    │       └── main.yml
+    ├── logstash/
+    │   ├── handlers/
+    │   │   └── main.yml
+    │   └── tasks/
+    │       └── main.yml
     └── nginx/
         ├── files/
+        │   └── index.html
         └── tasks/
             └── main.yml
 ```
@@ -221,7 +236,7 @@ Disables host key checking and specifies inventory.ini as the default inventory 
 Groups the servers into [logstash], [elk] and [webserver]. Specifies IP addresses and vagrant as the Ansible user. Logstash uses ansible_connection=local since Ansible runs directly on that node.
 
 ### site.yml
-Playbook that isntalls and configures all components in order: 
+Playbook that installs and configures all components in order: 
 1. **Update** — runs apt update and upgrade on all nodes
 2. **ELK** — installs Docker, Elasticsearch and Kibana on the elk node
 3. **Logstash** — installs and configures Logstash on the logstash node
@@ -265,6 +280,14 @@ Secret.txt
 
 ## Getting started
 
+1.  
+
+2.
+
+3.
+
+4.
+
 
 ## Secrets
 
@@ -277,6 +300,7 @@ Secret.txt
 | GPG key verification | All VMs | Packages verified with official GPG keys before installation |
 | Elasticsearch not exposed externally | ELK node | Only accessible on 192.168.56.10:9200 within private network |
 | Logstash not exposed externally | Logstash node | Only accessible on 192.168.56.11:5044 within private network |
+| Elasticsearch requires authentication | ElK node | curl http://192.168.56.10:9200 - should return 401 Unauthorized |
 
 
 

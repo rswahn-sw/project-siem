@@ -1,24 +1,29 @@
 ---
+# Installs tools needed to download and verify Filebeat
 - name: Install prerequisite packages
   apt:
     name:
-      - curl
-      - gnupg
-      - apt-transport-https
-      - wget
+      - curl                  # Application that handle downloads
+      - gnupg                 # Writes and checks digital signatures to ensure authenticity
+      - apt-transport-https   # Ensures we download GPG keys over encrypted HTTPS
+      - wget                  # Command that downloads files over http/ftp
     state: present
     update_cache: yes
 
+# Downloads Elastic GPG key and saves it to /usr/share/keyrings/
 - name: Add Elastic GPG key
   shell: wget -qO - https://artifacts.elastic.co/GPG-KEY-elasticsearch | gpg --dearmor -o /usr/share/keyrings/elastic-keyring.gpg
   args:
     creates: /usr/share/keyrings/elastic-keyring.gpg
 
+# Adds the official Elastic repository so apt can find and install Filebeat
+# signed-by ensures only packages signed with the Elastic key are trusted
 - name: Add Elastic repository
   apt_repository:
     repo: "deb [signed-by=/usr/share/keyrings/elastic-keyring.gpg] https://artifacts.elastic.co/packages/9.x/apt stable main"
     filename: elastic-9.x
     state: present
+
 
 - name: Install Filebeat
   apt:
@@ -26,13 +31,16 @@
     state: present
     update_cache: yes
 
+
 - name: Ensure Filebeat is started and enabled
   service:
     name: filebeat
     state: started
     enabled: yes
 
-    - name: Configure Filebeat
+# Writes Filebeat configuration to /etc/filebeat/filebeat.yml
+# Configures Filebeat to read Nginx logs and forward them to Logstash on port 5044
+- name: Configure Filebeat
   copy:
     content: |
       filebeat.inputs:
