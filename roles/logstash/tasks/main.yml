@@ -45,6 +45,7 @@
       input {
         beats {
           port => 5044
+          host => "0.0.0.0"
         }
       }
 
@@ -60,8 +61,16 @@
         elasticsearch {
           hosts => ["http://192.168.56.10:9200"]
           index => "filebeat-logs-%{+YYYY.MM.dd}"
+          user => "elastic"
+          # This line looks for the key and grabs everything after the '=' on that line
+          password => "{{ lookup('ansible.builtin.file', '/vagrant/secrets.txt') | regex_search('(?<=ES_LOCAL_PASSWORD=).*') }}"
         }
       }
-    mode: '0644'   
-    # Starts the handler to restart logstash
+    mode: '0644'
+
+- name: Change Logstash API binding from localhost to all interfaces
+  ansible.builtin.replace:
+    path: "/etc/logstash/logstash.yml"
+    regexp: '^#?\s*api\.http\.host:.*'
+    replace: '# api.http.host: "0.0.0.0"'
   notify: Restart Logstash
