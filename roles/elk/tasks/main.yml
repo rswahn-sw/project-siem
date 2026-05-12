@@ -22,7 +22,7 @@
     reload: yes
 
 
-- name: Limit JVM Heap in .env (to prevent the VM from running out of memory)
+- name: Limit JVM (Java) Heap in .env (to prevent the VM from running out of memory)
   ansible.builtin.lineinfile:
     path: "/home/vagrant/elastic-start-local/.env"
     regexp: '^ES_JAVA_OPTS='

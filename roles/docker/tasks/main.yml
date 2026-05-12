@@ -4,7 +4,7 @@
   ansible.builtin.apt:
     name:
       - ca-certificates     # Ensures authenticity of SSL/TLS connections
-      - curl                # What will download the GPG keys
+      - curl                # Application that handle downloads
       - gnupg               # Writes and checks digital signatures to ensure authenticity
     state: present
     update_cache: yes

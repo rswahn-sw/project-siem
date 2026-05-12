@@ -280,7 +280,7 @@ Secret.txt
 
 ## Getting started
 
-1.  
+1.      
 
 2.
 
