@@ -181,9 +181,15 @@ An automated security monitoring lab with three VMs provisioned via Vagrant and 
 ## 1. Architecture
 
 
-
+### Topology
 ![alt text](<image (1).png>)
 
+
+### Flowchart vagrant
+![alt text](image.png)
+
+### Flowchart ansible playbook
+![alt text](<playbook flow.drawio.png>)
 
 ## 2. Environments and IP addresses
 
@@ -292,6 +298,9 @@ Installs Java (required by Logstash), adds the Elastic repository and installs L
 ### Nginx Role
 Installs Nginx on the webserver node and brings a sample website online.
 
+### Firewall Role
+Configures firewall on all nodes.
+
 ## 5. Requirements and prerequisites
 Software that must be installed on the Windows host:
 
@@ -351,6 +360,7 @@ This files contains information about Elasticsearch and Kibana, including creden
 | GPG key verification | All VMs | Packages verified with official GPG keys before installation |
 | Elasticsearch and Kibana requires authentication | ElK node | curl http://192.168.56.10:9200 and curl http://192.168.56.10:5601 - should return 401 Unauthorized |
 | All credentials and SSH keys are in seperate files and generated locally | Host | Old SSH keys and passwords will not work when you generate VMs again | 
+|UFW Firewalls | All VMs | 
 
 
 
@@ -374,16 +384,7 @@ All traffic between VMs uses unencrypted HTTP. An attacker with access to the in
 
 *Accepted in this environment because*: In a local lab environment with no external access, the risk is considered acceptable.
 
-**Vulnerability 3: No firewall**
-
-No firewall (UFW) is configured on the VMs, meaning all ports are open within the private network.
-
-*Remediation*: Configure UFW on all VMs to only allow necessary ports.
-
-*Accepted in this environment because*: The private network is isolated from the internet and only accessible from the host machine.
-
-
-**Vulnerability 4: All logs forwarded without filtering**
+**Vulnerability 3: All logs forwarded without filtering**
 
 Filebeat is configured to forward all Nginx logs to Logstash without any filtering or rate limiting, which could overwhelm the pipeline with unnecessary data.
 
