@@ -46,3 +46,9 @@
   become: yes
   roles:
     - filebeat
+
+- name: Configure firewall on all nodes
+  hosts: all
+  become: yes
+  roles:
+    - firewall

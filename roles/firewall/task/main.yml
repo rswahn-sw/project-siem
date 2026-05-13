@@ -1,0 +1,48 @@
+---
+  # Deny all incoming traffic by default
+- name: Set UFW default policy to deny
+  ufw:
+    policy: deny
+
+# --- ALL HOSTS ---
+- name: Allow SSH on all 
+  ufw:
+    rule: allow
+    port: '22'
+    proto: tcp
+
+# --- LOGSTASH ---
+- name: Allow Filebeat input on logstash
+  ufw:
+    rule: allow
+    port: '5044'
+    proto: tcp
+  when: inventory_hostname == '192.168.56.11'
+
+# --- WEBSERVER ---
+- name: Allow HTTP traffic on webserver
+  ufw:
+    rule: allow
+    port: '80'
+    proto: tcp
+  when: inventory_hostname == '192.168.56.12'
+
+# --- ELK ---
+- name: Allow Elasticsearch on elk
+  ufw:
+    rule: allow
+    port: '9200'
+    proto: tcp
+  when: inventory_hostname == '192.168.56.10'
+
+- name: Allow Kibana on elk
+  ufw:
+    rule: allow
+    port: '5601'
+    proto: tcp
+  when: inventory_hostname == '192.168.56.10'
+
+  # Enable firewall
+- name: Enable firewall
+  ufw:
+    state: enabled
