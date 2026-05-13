@@ -22,7 +22,7 @@
 # Installs a specific version of Logstash to ensure compatibility with Elasticsearch and Filebeat
 - name: Install Logstash 9.3.3
   ansible.builtin.apt:
-    name: "logstash={{logstash_version}}"
+    name: logstash=1:9.3.3-1
     state: present
     update_cache: yes
     allow_downgrade: yes          # allow_downgrade allows switching to a lower version if a newer one is already installed
