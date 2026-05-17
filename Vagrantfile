@@ -19,7 +19,7 @@ Vagrant.configure("2") do |config|
 
       vb.name = "project-logstash"
 
-      vb.memory = "4096"
+      vb.memory = "8192" # Souped up to 8 GB RAM for the Ansible playbook to run smoothly.
 
       vb.cpus = 2
 
@@ -46,6 +46,9 @@ Vagrant.configure("2") do |config|
       sudo -u vagrant ssh-keygen -t ed25519 \ -f /home/vagrant/.ssh/id_ed25519 \ -N "" -C "logstash-node"
 
       cp /home/vagrant/.ssh/id_ed25519.pub \ /vagrant/ansible_id_ed25519.pub
+
+      # Clones the project repository to the home directory of the logstash VM, so that Ansible can access the playbooks and configuration files.
+      git clone https://github.com/rswahn-sw/project-siem
     SHELL
 
   end

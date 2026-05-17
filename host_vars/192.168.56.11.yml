@@ -1,0 +1,5 @@
+---
+custom_ufw_rules:
+  - port: '5044'
+    proto: 'tcp'
+    comment: 'Allow Filebeat listen port'
