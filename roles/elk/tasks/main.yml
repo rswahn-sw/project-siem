@@ -45,12 +45,12 @@
     chdir: "/home/vagrant/elastic-start-local"
   become_user: vagrant
 
-# Copies the .env file with credentials to the shared document /vagrant/secrets.txt
+# Copies the .env file with credentials to the shared document /vagrant/secrets.yml
 # This makes the credentials accessible on the host machine and all VMs
 - name: Fetch credentials to host machine
   ansible.builtin.fetch:
     src: "/home/vagrant/elastic-start-local/.env"
-    dest: "/vagrant/secrets.txt"
+    dest: "/vagrant/secrets.yml"
     flat: yes
 
 # Configures Elasticsearch to listen on all network interfaces instead of localhost only
