@@ -1,17 +1,13 @@
 ---
+# Installs Nginx web server using the apt package manager
 - name: Install Nginx using native apt module
   apt:
     name: nginx
-    state: present
+    state: present     #"install if not already exist"
 
+#Starts Nginx and ensures it starts automatically on reboot
 - name: Ensure Nginx is started and enabled on boot
   service:
     name: nginx
     state: started
     enabled: yes
-
-- name: Allow HTTP traffic through UFW (Firewall)
-  ufw:
-    rule: allow
-    port: '80'
-    proto: tcp

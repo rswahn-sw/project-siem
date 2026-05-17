@@ -1,4 +1,5 @@
 ---
+# Logstash requires Java to run. OpenJDK 17 headless is a lightweight version without GUI components
 - name: Install OpenJDK (Java (Required for Logstash))
   ansible.builtin.apt:
     name: openjdk-17-jre-headless
@@ -6,31 +7,37 @@
     update_cache: yes
 
 # The GPG key make sure the download of Logstash is genuine and not tampered with.
-
 - name: Add Elastic GPG Key
   ansible.builtin.apt_key:
     url: https://artifacts.elastic.co/GPG-KEY-elasticsearch
     state: present
 
+# Adds the official Elastic repository so apt can find and install Logstash
 - name: Add Logstash 9.x Repository
   ansible.builtin.apt_repository:
     repo: "deb https://artifacts.elastic.co/packages/9.x/apt stable main"
     state: present
     filename: elastic-9.x
 
+# Installs a specific version of Logstash to ensure compatibility with Elasticsearch and Filebeat
 - name: Install Logstash 9.3.3
   ansible.builtin.apt:
-    name: "logstash={{logstash_version}}"
+    name: logstash=1:9.3.3-1
     state: present
     update_cache: yes
-    allow_downgrade: yes
+    allow_downgrade: yes          # allow_downgrade allows switching to a lower version if a newer one is already installed
 
+# Starts Logstash and ensures it starts automatically on reboot
 - name: Ensure Logstash service is started and enabled
   ansible.builtin.service:
     name: logstash
     state: started
     enabled: yes
 
+# Creates a Logstash pipeline configuration file with three sections:
+# Input: listens for incoming logs from Filebeat on port 5044
+# Filter: tags logs as "web_server_logs" for easier searching in Kibana
+# Output: forwards processed logs to Elasticsearch, creating daily indexes
 - name: Configure Logstash to listen for Filebeat
   ansible.builtin.copy:
     dest: /etc/logstash/conf.d/02-beats-input.conf

@@ -5,27 +5,32 @@
     dest: /tmp/start-local.sh
     mode: '0755'
 
+
 - name: Execute start-local script as vagrant user
   ansible.builtin.shell: "bash /tmp/start-local.sh"
   args:
     chdir: "/home/vagrant"
-    creates: "/home/vagrant/elastic-start-local"
+    creates: "/home/vagrant/elastic-start-local"    
   become_user: vagrant
 
+# Elasticsearch requires the OS to allow many memory mappings
 - name: Fix Memory Mapping (Host Level)
   ansible.builtin.sysctl:
     name: vm.max_map_count
-    value: '262144'
+    value: '262144'            # 262144 is the minimum required value for Elasticsearch to run
     state: present
     reload: yes
 
-- name: Limit JVM Heap in .env
+
+- name: Limit JVM (Java) Heap in .env (to prevent the VM from running out of memory)
   ansible.builtin.lineinfile:
     path: "/home/vagrant/elastic-start-local/.env"
     regexp: '^ES_JAVA_OPTS='
     line: 'ES_JAVA_OPTS="-Xms2g -Xmx2g"'
   become_user: vagrant
 
+# Changes Docker port binding so Elasticsearch and Kibana are reachable from the network
+# Default is localhost only (127.0.0.1), changed to all interfaces (0.0.0.0)
 - name: Change Docker port binding from localhost to all interfaces
   ansible.builtin.replace:
     path: "/home/vagrant/elastic-start-local/docker-compose.yml"
@@ -33,32 +38,38 @@
     replace: '0.0.0.0:'
   become_user: vagrant
 
+# Starts Elasticsearch and Kibana as Docker containers
 - name: Start ELK containers
   ansible.builtin.shell: "./start.sh"
   args:
     chdir: "/home/vagrant/elastic-start-local"
   become_user: vagrant
 
+# Copies the .env file with credentials to the shared document /vagrant/secrets.txt
+# This makes the credentials accessible on the host machine and all VMs
 - name: Fetch credentials to host machine
   ansible.builtin.fetch:
     src: "/home/vagrant/elastic-start-local/.env"
     dest: "/vagrant/secrets.txt"
     flat: yes
 
+# Configures Elasticsearch to listen on all network interfaces instead of localhost only
 - name: Set Elasticsearch URL for external access
   ansible.builtin.lineinfile:
     path: "/home/vagrant/elastic-start-local/.env"
-    regexp: '^ES_LOCAL_URL='
-    line: 'ES_LOCAL_URL="http://0.0.0.0:9200"'
+    regexp: '^ES_LOCAL_URL='                                # Finds this exact line in the file
+    line: 'ES_LOCAL_URL="http://0.0.0.0:9200"'              # Replace the entire line with this
   become_user: vagrant
 
+# Configures Kibana to listen on all network interfaces so it is reachable from the browser
 - name: Set Kibana URL for external access
   ansible.builtin.lineinfile:
     path: "/home/vagrant/elastic-start-local/.env"
-    regexp: '^KIBANA_LOCAL_URL='
-    line: 'KIBANA_LOCAL_URL="http://0.0.0.0:5601"'
+    regexp: '^KIBANA_LOCAL_URL='                            # Finds this exact line in the file
+    line: 'KIBANA_LOCAL_URL="http://0.0.0.0:5601"'          # Replace the entire line with this
   become_user: vagrant
 
+# Restarts containers to apply the new .env configuration
 - name: Restart ELK containers to apply .env changes
   ansible.builtin.shell: "docker compose down && ./start.sh"
   args:
