@@ -1,0 +1,8 @@
+---
+custom_ufw_rules:
+  - port: '9200'
+    proto: 'tcp'
+    comment: 'Allow Elasticsearch listen port'
+  - port: '5601'
+    proto: 'tcp'
+    comment: 'Allow Kibana port'

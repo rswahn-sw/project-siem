@@ -5,19 +5,13 @@
   become: yes
   tasks:
 
-    # Run apt update on all machines, saying yes to prompts
-    - name: Update apt package lists
-      shell: apt update -y
-        
-    # Run apt upgrade on all machines, saying yes to prompts
-    - name: Upgrade all apt packages
-      shell: apt upgrade -y
-      register: upgrade_result  # Optional: Store output for later checks
-
-    - name: Update apt cache
-      apt:
-        update_cache: yes
-        cache_valid_time: 3600
+  # Run apt update & upgrade on all machines
+  - name: Update apt cache and upgrade all packages
+    ansible.builtin.apt:
+      update_cache: yes
+      cache_valid_time: 3600
+      upgrade: dist
+    register: upgrade_result    # Ouput is stored in Ansible for later checks
 
 # THE OFFICIAL ANSIBLE RULEBOOK STRUCTURE
 # Points to other .yml files in the roles directory. These are the files that ansible-playbook will run.
