@@ -360,7 +360,7 @@ This files contains information about Elasticsearch and Kibana, including creden
 | GPG key verification | All VMs | Packages verified with official GPG keys before installation |
 | Elasticsearch and Kibana requires authentication | ElK node | curl http://192.168.56.10:9200 and curl http://192.168.56.10:5601 - should return 401 Unauthorized |
 | All credentials and SSH keys are in seperate files and generated locally | Host | Old SSH keys and passwords will not work when you generate VMs again | 
-|UFW Firewalls | All VMs | 
+|UFW Firewalls | All VMs | SSH into each VM and rund sudo ufw status |
 
 
 
@@ -393,14 +393,14 @@ Filebeat is configured to forward all Nginx logs to Logstash without any filteri
 *Accepted in this environment because*: In a lab environment with low traffic, the volume of logs is not a concern.
 
 ## Production considerations
-### Infrasctructure
-* Real servers or cloud service instead of VMs
+### Infrastructure
+* Real servers or cloud services instead of VMs.
 * Load balancing and redundancy, multiple servers so that if one goes down, everything doesn't stop working.
 
 ### Security
-* HTTPS everywhere
-* SSH key passphrase
-* Secrets management via Ansible Vault
+* HTTPS and TLS everywhere.
+* SSH key passphrase.
+* Secrets management via Ansible Vault.
 * Stricter firewall rules, e.g. Elk VM only accepts connections from Logstash VM.
 
 ### Ansible
