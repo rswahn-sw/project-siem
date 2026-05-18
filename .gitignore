@@ -36,10 +36,11 @@ override.tf.json
 .terraformrc
 terraform.rc
 
-# SSH public key, old file that shouldn't be created anymore
-ls_key.pub
+# Temporary files created while VMs are created and provisioned
+.vagrant/
 
 # SSH public key
 ansible_id_ed25519.pub
+
+# Elastic credentials file
 secrets.txt
-secrets.yml

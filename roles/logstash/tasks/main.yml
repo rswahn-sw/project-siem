@@ -63,7 +63,7 @@
           index => "filebeat-logs-%{+YYYY.MM.dd}"
           user => "elastic"
           # This line looks for the key and grabs everything after the '=' on that line
-          password => "{{ lookup('ansible.builtin.file', '/vagrant/secrets.yml') | regex_search('(?<=ES_LOCAL_PASSWORD=).*') }}"
+          password => "{{ lookup('ansible.builtin.file', '/vagrant/secrets.txt') | regex_search('(?<=ES_LOCAL_PASSWORD=).*') }}"
         }
       }
     mode: '0644'
