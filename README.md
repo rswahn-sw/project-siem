@@ -392,6 +392,27 @@ Filebeat is configured to forward all Nginx logs to Logstash without any filteri
 
 *Accepted in this environment because*: In a lab environment with low traffic, the volume of logs is not a concern.
 
+## Production considerations
+### Infrasctructure
+* Real servers or cloud service instead of VMs
+* Load balancing and redundancy, multiple servers so that if one goes down, everything doesn't stop working.
+
+### Security
+* HTTPS everywhere
+* SSH key passphrase
+* Secrets management via Ansible Vault
+* Stricter firewall rules, e.g. Elk VM only accepts connections from Logstash VM.
+
+### Ansible
+* Dedicated Ansible server instead of running from Logstash.
+* Role-based access control, not everyone can run playbook.
+
+### Monitoring
+* Restrict which logs are sent, do not send everything.
+* Old logs are automatically cleared.
+* Alerting in Kibana, triggers an alarm when something abnormal happens.
+
+
 
 ## 10. Verification
 If the logs shows up in Kibana it means that everything is configured and working correctly. You can check that the logstash port is open and listening and that filebeat knows where to send the logs, but if it does not the logs will never show up in Kibana.
