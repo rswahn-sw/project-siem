@@ -1,0 +1,146 @@
+---
+- name: Verifying that our Webserver VM is running correctly...
+  hosts: webserver
+  tasks:
+    - name: Gather webserver service facts
+      ansible.builtin.service_facts:
+
+    - name: Assert that Nginx is actively running
+      ansible.builtin.assert:
+        that:
+          - ansible_facts.services['nginx.service'].state == 'running'
+        fail_msg: "Verification failed: Nginx is not running!"
+        success_msg: "Verification passed: Nginx is running."
+
+    - name: Assert that Filebeat is actively running
+      ansible.builtin.assert:
+        that:
+          - ansible_facts.services['filebeat.service'].state == 'running'
+        fail_msg: "Verification failed: Filebeat is not running!"
+        success_msg: "Verification passed: Filebeat is running."
+
+    - name: Verify that port 80 is open for our nginx webserver
+      ansible.builtin.wait_for:
+        port: 80
+        state: started
+        timeout: 5
+      register: port_check
+      ignore_errors: true
+
+- name: Verifying that our Logstash VM is running correctly...
+  hosts: logstash
+  tasks:
+    - name: Gather webserver service facts
+      ansible.builtin.service_facts:
+
+    - name: Assert that Logstash is actively running
+      ansible.builtin.assert:
+        that:
+          - ansible_facts.services['logstash.service'].state == 'running'
+        fail_msg: "Verification failed: Logstash is not running!"
+        success_msg: "Verification passed: Logstash is running."
+
+    - name: Verify that port 5044 is open so our Logstash can recieve logs
+      ansible.builtin.wait_for:
+        port: 5044
+        state: started
+        timeout: 5
+      register: port_check
+      ignore_errors: true
+
+- name: Verifying that our Elk VM is running correctly...
+  hosts: elk
+  tasks:
+    - name: Gather webserver service facts
+      ansible.builtin.service_facts:
+
+    - name: Verify that port 9200 is open so our Elasticsearch can recieve parsed logs
+      ansible.builtin.wait_for:
+        port: 9200
+        state: started
+        timeout: 5
+      register: port_check
+      ignore_errors: true
+
+    - name: Verify that port 5601 is open so we can access Kibana and look at logs
+      ansible.builtin.wait_for:
+        port: 5601
+        state: started
+        timeout: 5
+      register: port_check
+      ignore_errors: true
+
+
+- name: Generate log to send to SIEM
+  hosts: webserver
+  gather_facts: false
+  tasks:
+    - name: Visit webserver page and check for a 200 OK status
+      ansible.builtin.uri:
+        url: "http://localhost/"
+        method: GET
+        return_content: true
+        status_code: 200
+      register: web_response
+
+    - name: Display the TML content of the page
+      ansible.builtin.debug:
+        msg: "{{ web_response.content }}"
+
+- name: --FINAL TEST-- ELK Stack End-to-End tracer package
+  hosts: webserver
+  become: yes
+  tasks:
+    - name: 1. Generate a unique trace ID
+      ansible.builtin.set_fact:
+        trace_id: "SIEMDEMO{{ ansible_date_time.epoch }}"
+
+    - name: 2. Inject the tracer package into the webserver's syslog, using CURL
+      ansible.builtin.command:
+        cmd: 'curl -s -H "User-Agent: {{ trace_id }}" http://127.0.0.1'
+      # changed_when is used because this is a test and not a system configuration, so we always want it to trigger.
+      changed_when: false
+
+    - name: 3. Pause for 15 seconds to allow the ELk pipeline to process
+      ansible.builtin.pause:
+        seconds: 15
+
+    - name: 4. Query Elasticsearch for the trace ID
+      ansible.builtin.uri:
+        url: "{{ elasticsearch_url }}/_search"
+        method: POST
+        url_username: "elastic"
+        url_password: "{{ lookup('ini', 'ES_LOCAL_PASSWORD type=properties file=/vagrant/secrets.yml') }}"
+        force_basic_auth: true
+        body_format: json
+        body:
+          query:
+            query_string:
+              query: '"{{ trace_id }}"'
+        return_content: true
+        # Temporarily accept ALL HTTP statuses so Ansible is patient
+        # enough for Elasticsearch to process
+        status_code: [200, 400, 401, 403, 404, 500, 503]
+      register: es_response
+      delegate_to: localhost
+      become: false
+      # Retries until the logs arrive
+      retries: 6
+      delay: 5
+      until: >
+        es_response.status == 200 and
+        'hits' in es_response.json and
+        es_response.json.hits.total.value > 0
+      ignore_errors: true
+
+    - name: DEBUG
+      ansible.builtin.debug:
+        msg: "HTTP {{ es_response.status }} | Response: {{ es_response.json }}"
+      when: es_response.status != 200 or 'hits' not in es_response.json
+
+    - name: 5. Verify that the log arrived successfully
+      ansible.builtin.assert:
+        that:
+          - es_response.json.hits.total.value > 0
+        success_msg: "SUCCESS: Found {{ trace_id }} in Elasticsearch! :)"
+        fail_msg: "FAILURE: The trace package {{ trace_id }} never arrived in Elasticsearch..."
