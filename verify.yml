@@ -110,7 +110,7 @@
         url: "{{ elasticsearch_url }}/_search"
         method: POST
         url_username: "elastic"
-        url_password: "{{ lookup('ini', 'ES_LOCAL_PASSWORD type=properties file=/vagrant/secrets.txt') }}"
+        url_password: "{{ lookup('ini', 'ES_LOCAL_PASSWORD type=properties file={{ secrets_file }}') }}"
         force_basic_auth: true
         body_format: json
         body:

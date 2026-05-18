@@ -1,19 +1,24 @@
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
 
+# Our VM IP addresses, defined as variables for easier maintenance and readability.
+ELK_IP = "192.168.56.10"
+LOGSTASH_IP = "192.168.56.11"
+WEBSERVER_IP = "192.168.56.12"
+
 Vagrant.configure("2") do |config|
  
   # Use Ubuntu 22.04 (Jammy Jellyfish) as base image for all VMs.
   config.vm.box = "ubuntu/jammy64"
 
-  # --- FILTER AND CONTROLVM (Logstash) ---
+  # --- FILTER AND CONTROL VM (Logstash + Ansible) ---
   # This VM will filter logs and send it to the SIEM VM.
   # It will also run Ansible to set up the other machines, so it is created first.
   config.vm.define "logstash" do |ls|
 
     ls.vm.hostname = "logstash"
 
-    ls.vm.network "private_network", ip: "192.168.56.11"
+    ls.vm.network "private_network", ip: LOGSTASH_IP
 
     ls.vm.provider "virtualbox" do |vb|
 
@@ -60,7 +65,7 @@ Vagrant.configure("2") do |config|
 
     web.vm.hostname = "webserver"
 
-    web.vm.network "private_network", ip: "192.168.56.12"
+    web.vm.network "private_network", ip: WEBSERVER_IP
 
     web.vm.provider "virtualbox" do |vb|
 
@@ -100,15 +105,15 @@ Vagrant.configure("2") do |config|
 
     elk.vm.hostname = "elk"
 
-    elk.vm.network "private_network", ip: "192.168.56.10"
+    elk.vm.network "private_network", ip: ELK_IP
 
     elk.vm.provider "virtualbox" do |vb|
 
       vb.name = "project-elk"
 
-      vb.memory = "4096" # ELK needs significant RAM - changed to 1 from 4 GB until programs are set up
+      vb.memory = "4096" # ELK needs significant RAM - changed to 1 from 4 GB so that installation doesn't fail.
 
-      vb.cpus = 1 # Changed to 1 from 2, for now
+      vb.cpus = 1
 
     end
 

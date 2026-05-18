@@ -4,11 +4,6 @@
     name: ufw
     state: present
 
-  # Deny all incoming traffic by default so we only use the ports we need.
-#- name: Set UFW default policy to deny
-#  ufw:
-#    policy: deny
-
 # --- ALL HOSTS ---
 - name: Allow SSH on all hosts
   community.general.ufw:

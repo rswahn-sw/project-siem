@@ -23,24 +23,28 @@
     - docker
     - elk
 
+# The logstash role installs and configures Logstash to listen for incoming logs from Filebeat and forward them to Elasticsearch.
 - name: Install Logstash
   hosts: logstash
   become: yes
   roles:
     - logstash
 
+# The webserver role installs and configures Nginx to serve a simple webpage to be monitored.
 - name: Install Nginx Web Server
   hosts: webserver
   become: yes
   roles:
     - nginx
 
+# The filebeat role installs and configures Filebeat to monitor Nginx logs and send them to Logstash.
 - name: Setup Filebeat on webserver
   hosts: webserver
   become: yes
   roles:
     - filebeat
 
+# Finally, we configure the firewall on all nodes to allow necessary traffic for our ELK stack to function properly.
 - name: Configure firewall on all nodes
   hosts: all
   become: yes

@@ -1,2 +1,4 @@
 ---
 elasticsearch_url: "http://192.168.56.10:9200"
+elastic_version: "elastic-9.x"
+secrets_file: "/vagrant/secrets.txt"
